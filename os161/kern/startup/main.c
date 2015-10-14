@@ -97,11 +97,12 @@ boot(void)
 	 */
 
 	kprintf("\n");
+	kprintf("LahGahLahGahLahGahLahGahLahGah \n");
 	kprintf("OS/161 base system version %s\n", BASE_VERSION);
 	kprintf("%s", harvard_copyright);
 	kprintf("\n");
 
-	kprintf("Put-your-group-name-here's system version %s (%s #%d)\n", 
+	kprintf("POrko's system version %s (%s #%d)\n", 
 		GROUP_VERSION, buildconfig, buildversion);
 	kprintf("\n");
 

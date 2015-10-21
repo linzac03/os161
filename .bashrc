@@ -44,6 +44,8 @@ fi
 #alias ll='ls -l'
 #alias la='ls -A'
 #alias l='ls -CF'
+alias l='ls -a'
+alias shit='logout'
 
 #STOP BEEPING PLEASE FFS
 xset b off 2>/dev/null

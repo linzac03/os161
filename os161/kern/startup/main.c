@@ -49,6 +49,8 @@
 #include <syscall.h>
 #include <test.h>
 #include <version.h>
+//#include <hello.c>
+#include "opt-A0.h"
 #include "autoconf.h"  // for pseudoconfig
 
 
@@ -105,6 +107,10 @@ boot(void)
 	kprintf("POrko's system version %s (%s #%d)\n", 
 		GROUP_VERSION, buildconfig, buildversion);
 	kprintf("\n");
+	#if OPT_A0
+		hello();
+		kprintf("\n");
+	#endif /* OPT_A0 */
 
 	/* Early initialization. */
 	ram_bootstrap();

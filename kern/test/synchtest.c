@@ -235,7 +235,8 @@ locktest(int nargs, char **args)
 
 	inititems();
 	kprintf("Starting lock test...\n");
-
+//	kprintf((char *)curthread);
+//	kprintf("\n");
 	for (i=0; i<NTHREADS; i++) {
 		result = thread_fork("synchtest", NULL, locktestthread,
 				     NULL, i);

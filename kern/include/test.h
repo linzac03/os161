@@ -56,6 +56,9 @@ int bitmaptest(int, char **);
 int queuetest(int, char **);
 
 /* thread tests */
+int unsafethreadcounter(int, char **);
+int lockthreadcounter(int, char **);
+int spinlockthreadcounter(int, char **);
 int mythreadtest(int, char **);
 int threadtest(int, char **);
 int threadtest2(int, char **);

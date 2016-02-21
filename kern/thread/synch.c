@@ -181,11 +181,13 @@ void
 lock_destroy(struct lock *lock)
 {
 	KASSERT(lock != NULL);
+	KASSERT(lock->hold == NULL);
 
 	// add stuff here as needed
 
 	spinlock_cleanup(&lock->lk_lock);
 	wchan_destroy(lock->lk_wchan);
+	kfree((void *)lock->hold);
 	kfree(lock->lk_name);
 	kfree(lock);
 }
@@ -271,7 +273,7 @@ cv_destroy(struct cv *cv)
         KASSERT(cv != NULL);
 
         // add stuff here as needed
-		  wchan_destroy(cv->cv_wchan); 
+		  wchan_destroy(cv->cv_wchan);
         kfree(cv->cv_name);
         kfree(cv);
 }

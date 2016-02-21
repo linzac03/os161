@@ -42,13 +42,12 @@ mythread(void *junk, unsigned long num)
 
 static
 void
-myrunthreads()
-{
+myrunthreads(int n) {
 	char name[16];
 	int i, result;
 
-	for (i=0; i<NTHREADS; i++) {
-		snprintf(name, sizeof(name), "threadtest%d", i);
+	for (i=0; i<n; i++) {
+		kprintf(name, sizeof(name), "threadtest%d", i);
 		result = thread_fork(name, NULL, mythread, NULL, i);
 		if (result) {
 			panic("threadtest: thread_fork failed %s)\n", 
@@ -62,12 +61,11 @@ myrunthreads()
 int
 mythreadtest(int nargs, char **args)
 {
-	(void)nargs;
-	(void)args;
-
+	if (nargs > 2) return 1;
+	
 	init_sema();
 	kprintf("Starting thread test...\n");
-	myrunthreads();
+	myrunthreads(atoi(args[1]));
 	kprintf("\nThread test done.\n");
 
 	return 0;

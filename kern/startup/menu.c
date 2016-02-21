@@ -47,7 +47,7 @@
 #include "opt-net.h"
 
 /*
- * In-kernel menu and command dispatcher.
+ * In-kernel menu and command ==================dispatcher.
  */
 
 #define _PATH_SHELL "/bin/sh"
@@ -453,6 +453,8 @@ cmd_opsmenu(int n, char **a)
 
 static const char *testmenu[] = {
 	"[zt]  Zach test                     ",
+	"[utc]  Unsafe thread counter        ",
+	"[ltc]  Lock thread counter          ",
 	"[mt]  My threadest                  ",
 	"[at]  Array test                    ",
 	"[bt]  Bitmap test                   ",
@@ -544,7 +546,7 @@ static struct {
 	{ "bootfs",	cmd_bootfs },
 	{ "pf",		printfile },
 	{ "cd",		cmd_chdir },
-	{ "pwd",	cmd_pwd },
+	{ "pwd",		cmd_pwd },
 	{ "sync",	cmd_sync },
 	{ "panic",	cmd_panic },
 	{ "q",		cmd_quit },
@@ -563,6 +565,9 @@ static struct {
 	{ "kh",  cmd_kheapstats },
 
 	/* base system tests */
+	{"utc", unsafethreadcounter},
+	{"ltc", lockthreadcounter},
+	{"stc", spinlockthreadcounter},
 	{ "zt",	zachtest },
 	{ "mt",	mythreadtest },
 	{ "at",	arraytest },

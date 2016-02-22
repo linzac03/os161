@@ -34,7 +34,7 @@ count(void *junk, unsigned long num)
 	(void)junk;
 
 	for (i=0; i<n; i++) {
-		++cnt;	
+		cnt++;	
 	}
 	V(tsem);
 }
@@ -52,8 +52,8 @@ threadcount(int threads, int counts) {
 			panic("threadtest: thread_fork failed %s)\n", 
 			      strerror(result));
 		}
-		P(tsem);
 	}
+	P(tsem);
 }
 
 
@@ -68,8 +68,8 @@ unsafethreadcounter(int nargs, char **args)
 	}
 	if (nargs == 2) {	
 		kprintf("Starting unsafe thread count...\n");
-		expected = atoi(args[1]) * 3;
-		threadcount(atoi(args[1]), 3);
+		expected = atoi(args[1]) * 10000;
+		threadcount(atoi(args[1]), 10000);
 		kprintf("Result: %d | Expected: %d", cnt, expected);
 		kprintf("\nThread count done.\n");
 		cnt = 0;

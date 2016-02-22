@@ -6,7 +6,7 @@
 
 #define NTHREADS  10
 
-int cnt = 0;
+volatile int cnt = 0;
 int expected;
 static struct lock *lk = 0; 
 
@@ -34,10 +34,8 @@ count(void *junk, unsigned long num) {
 	int n = (int)num;
 	(void)junk;
 	for (i=0; i<n; i++) {
-		if (!lock_do_i_hold(lk)) {
-			lock_acquire(lk);	
-			cnt++;
-		}	
+		lock_acquire(lk);	
+		cnt++;
 		lock_release(lk);	
 	}
 	V(tsem);
@@ -56,6 +54,8 @@ threadcount(int threads, int counts) {
 			panic("threadtest: thread_fork failed %s)\n", 
 			      strerror(result));
 		}
+	}
+	for (i=0; i<threads; i++) {
 		P(tsem);
 	}
 }
@@ -76,9 +76,9 @@ lockthreadcounter(int nargs, char **args) {
 		return 0;
 	}
 	if (nargs == 2) {	
-		kprintf("Starting unsafe thread count...\n");
-		threadcount(atoi(args[1]), 3);
-		expected = atoi(args[1]) * 3;
+		kprintf("Starting lock thread count...\n");
+		threadcount(atoi(args[1]), 10000);
+		expected = atoi(args[1]) * 10000;
 		kprintf("Result: %d | Expected: %d", cnt, expected);
 		kprintf("\nThread count done.\n");
 	  	cnt = 0;

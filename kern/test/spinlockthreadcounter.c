@@ -7,7 +7,7 @@
 
 #define NTHREADS  10
 
-int scnt = 0;
+volatile int scnt = 0;
 int expected;
 
 static struct spinlock lk; 
@@ -35,11 +35,9 @@ count(void *junk, unsigned long num) {
 	int n = (int)num;
 	(void)junk;
 	for (i=0; i<n; i++) {
-		if (!spinlock_do_i_hold(&lk)) {
-			spinlock_acquire(&lk);	
-			scnt++;
-		}	
-		spinlock_release(&lk);	
+		spinlock_acquire(&lk);	
+		scnt++;
+		spinlock_release(&lk);
 	}
 	V(tsem);
 }
@@ -57,6 +55,8 @@ threadcount(int threads, int counts) {
 			panic("threadtest: thread_fork failed %s)\n", 
 			      strerror(result));
 		}
+	}
+	for (i=0; i<threads; i++) {
 		P(tsem);
 	}
 }
@@ -73,8 +73,8 @@ spinlockthreadcounter(int nargs, char **args) {
 	}
 	if (nargs == 2) {	
 		kprintf("Starting spinlock thread count...\n");
-		threadcount(atoi(args[1]), 3);
-		expected = atoi(args[1]) * 3;
+		threadcount(atoi(args[1]), 10000);
+		expected = atoi(args[1]) * 10000;
 		kprintf("Result: %d | Expected: %d", scnt, expected);
 		kprintf("\nThread count done.\n");
 	  	scnt = 0;

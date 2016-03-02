@@ -11,6 +11,7 @@ SUBDIRS= lib files1 files2 conc-io writeread \
 	vm-mix1 vm-mix1-exec vm-mix1-fork vm-mix2 \
 	romemwrite sparse tlbfaulter \
 	onefork widefork pidcheck \
-	xhog yhog zhog hogparty argtesttest
+	xhog yhog zhog hogparty argtesttest \
+	stubtest
 
 .include "$(TOP)/mk/os161.subdir.mk"

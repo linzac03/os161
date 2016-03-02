@@ -64,7 +64,7 @@ struct proc *kproc;
 static unsigned int proc_count;
 /* provides mutual exclusion for proc_count */
 /* it would be better to use a lock here, but we use a semaphore because locks are not implemented in the base kernel */ 
-static struct semaphore *proc_count_mutex;
+static struct lock *proc_count_mutex;
 /* used to signal the kernel menu thread when there are no processes */
 struct semaphore *no_proc_sem;   
 #endif  // UW
@@ -162,7 +162,7 @@ proc_destroy(struct proc *proc)
 	  vfs_close(proc->console);
 	}
 #endif // UW
-
+	threadarray_init(&proc->p_threads);
 	threadarray_cleanup(&proc->p_threads);
 	spinlock_cleanup(&proc->p_lock);
 
@@ -174,14 +174,14 @@ proc_destroy(struct proc *proc)
         /* note: kproc is not included in the process count, but proc_destroy
 	   is never called on kproc (see KASSERT above), so we're OK to decrement
 	   the proc_count unconditionally here */
-	P(proc_count_mutex); 
+	lock_acquire(proc_count_mutex); 
 	KASSERT(proc_count > 0);
 	proc_count--;
 	/* signal the kernel menu thread if the process count has reached zero */
 	if (proc_count == 0) {
 	  V(no_proc_sem);
 	}
-	V(proc_count_mutex);
+	lock_release(proc_count_mutex);
 #endif // UW
 	
 
@@ -197,11 +197,12 @@ proc_bootstrap(void)
   if (kproc == NULL) {
     panic("proc_create for kproc failed\n");
   }
+  kproc->p_pid = 0;
 #ifdef UW
   proc_count = 0;
-  proc_count_mutex = sem_create("proc_count_mutex",1);
+  proc_count_mutex = lock_create("proc_count_mutex");
   if (proc_count_mutex == NULL) {
-    panic("could not create proc_count_mutex semaphore\n");
+    panic("could not create proc_count_mutex lock\n");
   }
   no_proc_sem = sem_create("no_proc_sem",0);
   if (no_proc_sem == NULL) {
@@ -218,6 +219,67 @@ proc_bootstrap(void)
  */
 struct proc *
 proc_create_runprogram(const char *name)
+{
+	struct proc *proc;
+	char *console_path;
+
+	proc = proc_create(name);
+	if (proc == NULL) {
+		return NULL;
+	}
+	proc->p_pid = proc_count;
+	proc->p_ppid = curproc->p_pid;
+	proc->p_pproc = curproc;
+	
+#ifdef UW
+	/* open the console - this should always succeed */
+	console_path = kstrdup("con:");
+	if (console_path == NULL) {
+	  panic("unable to copy console path name during process creation\n");
+	}
+	if (vfs_open(console_path,O_WRONLY,0,&(proc->console))) {
+	  panic("unable to open the console during process creation\n");
+	}
+	kfree(console_path);
+#endif // UW
+	  
+	/* VM fields */
+
+	proc->p_addrspace = NULL;
+
+	/* VFS fields */
+
+#ifdef UW
+	/* we do not need to acquire the p_lock here, the running thread should
+           have the only reference to this process */
+        /* also, acquiring the p_lock is problematic because VOP_INCREF may block */
+	if (curproc->p_cwd != NULL) {
+		VOP_INCREF(curproc->p_cwd);
+		proc->p_cwd = curproc->p_cwd;
+	}
+#else // UW
+	spinlock_acquire(&curproc->p_lock);
+	if (curproc->p_cwd != NULL) {
+		VOP_INCREF(curproc->p_cwd);
+		proc->p_cwd = curproc->p_cwd;
+	}
+	spinlock_release(&curproc->p_lock);
+#endif // UW
+
+#ifdef UW
+	/* increment the count of processes */
+        /* we are assuming that all procs, including those created by fork(),
+           are created using a call to proc_create_runprogram  */
+	lock_acquire(proc_count_mutex); 
+	proc_count++;
+	lock_release(proc_count_mutex);
+#endif // UW
+
+	return proc;
+}
+
+struct proc *
+proc_create_fork(const char *name)
 {
 	struct proc *proc;
 	char *console_path;
@@ -266,9 +328,9 @@ proc_create_runprogram(const char *name)
 	/* increment the count of processes */
         /* we are assuming that all procs, including those created by fork(),
            are created using a call to proc_create_runprogram  */
-	P(proc_count_mutex); 
+	lock_acquire(proc_count_mutex); 
 	proc_count++;
-	V(proc_count_mutex);
+	lock_release(proc_count_mutex);
 #endif // UW
 
 	return proc;

@@ -40,6 +40,7 @@
 
 
 /* Flags word for DEBUG() macro. */
+//uint32_t dbflags = DB_SYSCALL; //| DB_THREADS;
 uint32_t dbflags = 0;
 
 /* Lock for non-polled kprintfs */
@@ -96,7 +97,7 @@ kprintf(const char *fmt, ...)
 	int chars;
 	va_list ap;
 	bool dolock;
-
+	
 	dolock = kprintf_lock != NULL
 		&& curthread->t_in_interrupt == false
 		&& curthread->t_iplhigh_count == 0;

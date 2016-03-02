@@ -69,6 +69,11 @@ struct proc {
 #endif
 
 	/* add more material here as needed */
+  pid_t p_pid;
+
+  pid_t p_ppid;
+  struct proc *p_pproc;
+  
 };
 
 /* This is the process structure for the kernel and for kernel-only threads. */
@@ -84,6 +89,8 @@ void proc_bootstrap(void);
 
 /* Create a fresh process for use by runprogram(). */
 struct proc *proc_create_runprogram(const char *name);
+
+struct proc *proc_create_fork(const char *name);
 
 /* Destroy a process. */
 void proc_destroy(struct proc *proc);

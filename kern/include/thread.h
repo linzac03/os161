@@ -104,7 +104,14 @@ struct thread {
 	/*
 	 * Public fields
 	 */
+	/* Process-level */
+	pid_t t_pid;			/* this thread's pid */
 
+	/* VM */
+	struct addrspace *t_addrspace;	/* virtual address space */
+
+	/* VFS */
+	struct vnode *t_cwd;		/* current working directory */
 	/* add more here as needed */
 };
 

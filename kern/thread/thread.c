@@ -507,6 +507,7 @@ thread_fork(const char *name,
 	/* Thread subsystem fields */
 	newthread->t_cpu = curthread->t_cpu;
 
+
 	/* Attach the new thread to its process */
 	if (proc == NULL) {
 		proc = curthread->t_proc;
@@ -545,8 +546,7 @@ thread_fork(const char *name,
  */
 static
 void
-thread_switch(threadstate_t newstate, struct wchan *wc)
-{
+thread_switch(threadstate_t newstate, struct wchan *wc) {
 	struct thread *cur, *next;
 	int spl;
 
@@ -787,6 +787,7 @@ thread_exit(void)
 #ifdef UW
 	/* threads for user processes should have detached from their process
 	   in sys__exit */
+	as_activate();
 	KASSERT(curproc == kproc || curproc == NULL);	
 	/* kernel threads don't go through sys__exit, so we detach them from kproc here */
 	if (curproc == kproc) {

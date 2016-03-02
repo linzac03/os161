@@ -108,7 +108,7 @@ cmd_progthread(void *ptr, unsigned long nargs)
 			strerror(result));
 		return;
 	}
-
+	thread_exit();
 	/* NOTREACHED: runprogram only returns on error. */
 }
 
@@ -149,6 +149,7 @@ common_prog(int nargs, char **args)
 	if (result) {
 		kprintf("thread_fork failed: %s\n", strerror(result));
 		proc_destroy(proc);
+		thread_exit();
 		return result;
 	}
 

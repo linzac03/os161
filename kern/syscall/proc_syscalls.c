@@ -7,11 +7,14 @@
 #include <current.h>
 #include <proc.h>
 #include <thread.h>
+#include <threadlist.h>
 #include <addrspace.h>
 #include <copyinout.h>
+#include <mips/trapframe.h>
 
   /* this implementation of sys__exit does not do anything with the exit code */
   /* this needs to be fixed to get exit() and waitpid() working properly */
+void uproc_thread (void *temp_tr, unsigned long k);
 
 void sys__exit(int exitcode) {
 
@@ -42,7 +45,6 @@ void sys__exit(int exitcode) {
   /* if this is the last user process in the system, proc_destroy()
      will wake up the kernel menu thread */
   proc_destroy(p);
-  
   thread_exit();
   /* thread_exit() does not return, so we should never get here */
   panic("return from thread_exit in sys_exit\n");
@@ -90,5 +92,76 @@ sys_waitpid(pid_t pid,
   }
   *retval = pid;
   return(0);
+}
+
+int sys_fork(struct trapframe *tf, pid_t *retval) {
+	struct trapframe * temp_tf;
+	int err;
+	char *name;
+	struct addrspace * child_vmspace = NULL;
+	struct proc * child_proc = NULL;
+	/* Plug in a syscall DEBUG print for good measure */
+	DEBUG(DB_SYSCALL,"Syscall: sys_fork()\n");
+
+	/* Allocate the temporary trapframe. What if this fails? */
+	temp_tf = kmalloc(sizeof(struct trapframe));
+
+
+			/* Copy parent address space. Do this early in case it fails.  */
+	KASSERT(child_vmspace == NULL);
+	as_copy(curproc->p_addrspace, &child_vmspace);
+	if (child_vmspace == NULL) {
+		kprintf("sys_fork: as_copy failed %s\n",strerror(ENOMEM));
+		return ENOMEM;
+	}
+
+	KASSERT(child_proc == NULL);
+	child_proc = proc_create_runprogram("child");
+	child_proc->p_addrspace = child_vmspace;	
+	/* Copy the parent trap frame to the temporary trapframe.
+	 *  * This is the first of two trapframe copies in the fork transition from
+	 *   * the parent to the child.
+	 *    */
+	/* Note this only does a one level copy, but trapframes don't
+	 *  * have pointers except what we'll fill in from here on.
+	 *   */
+	*temp_tf = *tf;
+	kprintf(name, sizeof(name), "testthread%d", 0);
+	/* Test case fork - use the calling proc as parent */
+	err = thread_fork(name, child_proc, enter_forked_process, temp_tf, (unsigned long)child_vmspace);
+	if (err) {
+			kfree(temp_tf);
+			proc_destroy(child_proc);
+			return err;
+	}
+	/* For debugging */
+	kprintf("Parent returning after thread fork\n");
+	/* Parent returns to syscall dispatcher with the child pid */
+	/*   *retval = (proc -> p_pid); */
+	/* We don't have a proc yet so we return a stub value */
+	/* the MIN_PID in limits.h is 2. Presumably the initial uproc is 1 */
+	*retval = child_proc->p_pid;
+
+	/* For debugging */
+	kprintf("Parent finally leaving sys_fork\n");
+	return(0);
+}
+
+void uproc_thread (void *temp_tr, unsigned long k) {
+	//(void)k;	
+	//(void)temp_tr;
+	struct trapframe *tmp;
+
+	tmp = kmalloc(sizeof(struct trapframe));
+	
+	
+	*tmp = *(struct trapframe *)temp_tr;
+	
+	kprintf("Child - I made it to the child user uproc_thread!\n");
+	
+	proc_remthread(curthread);
+/* just testing - see if we can get this far before the hard stuff */
+	enter_forked_process(tmp, k);
+	//thread_exit();	
 }
 
